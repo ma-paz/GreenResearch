@@ -2,17 +2,23 @@ En este cuadro de texto se ingreasan los objetivos y tareas por desarrollar de e
 
 ## Objetivos
 Obtener metadata de los siguientes portales:
-- ACM (Status: Testing acmdowload by niklasekstrom)
-- IEEE Xplore (Status: Waiting for key status update)
+- ACM (Status: Testing acmdowload by niklasekstrom! Testing failed, more research needed)
+- IEEE Xplore (Status: Done)
 - Taylor and Francis (Status: Not begun)
 - Science Direct (Status: Not begun)
 - Springer (Status: Research)
 
+
+## Micro objetivos:
+- Completar la función **Seleccionar_outliers(lista_completa):** en el file Processing_layer_funcs.py(Status:Not done)
+- Completar la función **quick_reading_score()** en el file Processing_layer_funcs.py(Status:Not done)
+
+
 ## Pasos del Proyecto Total
-- Bajar información de los documentos (Status: In Process)
-- Mejorar la búsqueda con IA (Status: Not begun)
+- Bajar información de los documentos (Status: Done)
+- Mejorar la búsqueda con IA (Status: Done)
 - Filtro de la búsqueda mejorada (Status: Not begun)
-- Levantar api que realice la búsqueda y devuelva json con la información filtrada (Status: Not begun)
+- Levantar api que realice la búsqueda y devuelva json con la información filtrada (Status: In process)
 - Mejorar la api y que devuelva .exe (Optional) (Status: Not begun)
 - Mejorar la api y que devuelva papers (Status: Not begun)
 
