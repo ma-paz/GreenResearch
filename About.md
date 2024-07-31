@@ -9,10 +9,10 @@ Obtener metadata de los siguientes portales:
 - Springer (Status: Research)
 
 ## Pasos del Proyecto Total
-- Bajar información de los documentos (Status: )
-- Mejorar la búsqueda con IA (Status: )
-- Filtro de la búsqueda mejorada (Status: )
-- Levantar api que realice la búsqueda y devuelva json con la información filtrada (Status: )
-- Mejorar la api y que devuelva .exe (Optional) (Status: )
-- Mejorar la api y que devuelva papers (Status: )
+- Bajar información de los documentos (Status: In Process)
+- Mejorar la búsqueda con IA (Status: Not begun)
+- Filtro de la búsqueda mejorada (Status: Not begun)
+- Levantar api que realice la búsqueda y devuelva json con la información filtrada (Status: Not begun)
+- Mejorar la api y que devuelva .exe (Optional) (Status: Not begun)
+- Mejorar la api y que devuelva papers (Status: Not begun)
 
