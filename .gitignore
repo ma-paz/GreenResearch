@@ -1,3 +1,4 @@
 .env
+Failed_attempts/
 How_to_ieee_api.md
-output.csv
+*.csv
