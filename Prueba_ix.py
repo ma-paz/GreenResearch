@@ -3,20 +3,24 @@ import os
 import openai
 from dotenv import load_dotenv
 from openai import OpenAI
+from Processing_layer_funcs import *
 import pandas as pd
+from datetime import datetime
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
+ieee_api_key = os.getenv('IEEE_API_KEY')
+openai.api_key = os.getenv('OPENAI_API_KEY')
+current_year = datetime.now().year
 
 # Función para construir la URL de la API de IEEE Xplore
-def build_ieee_xplore_url(api_key, query, max_records, min_year):
+def build_ieee_xplore_url(api_key, query, max_records, year):
     base_url = "https://ieeexploreapi.ieee.org/api/v1/search/articles"
     params = {
         'apikey': api_key,
         'querytext': query,
         'max_records': max_records,
-        'start_date' : min_year,#por alguna razón usar start y end lo mata
-        #'end_date': 2025#posibilidad de cambiar a un this_year
+        'd-year' : year
     }
     return base_url, params
 
@@ -63,17 +67,17 @@ def search_ieee_xplore(api_key, query, max_records, min_year):
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
-
+    return df
 
 
 # Función para consultar a la API de OpenAI GPT
-def query_openai(prompt, model="gpt-3.5-turbo", max_tokens=100):
+def smart_prompt_assistant(prompt, model="gpt-3.5-turbo", max_tokens=100):
     client = OpenAI()
     try:
         response = client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "system", "content": "You are prompt assistant for ieee xplore prompts."},
                 {"role": "user", "content": prompt}
             ],max_tokens=max_tokens,
             temperature=0.7,
@@ -82,25 +86,42 @@ def query_openai(prompt, model="gpt-3.5-turbo", max_tokens=100):
     except Exception as e:
         return f"Error: {e}"
 
+def Buscando_fecha(api_key, query, max_records, year):
+    '''
+    Función que realiza el llamado por año desde el año entregado hasta el presente.
+    '''
+    
+    return 0
 
-# Tu clave API de IEEE Xplore
-ieee_api_key = os.getenv('IEEE_API_KEY')
-# Configura tu clave API de OpenAI
-openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# Parámetros de búsqueda
+
+
+
+# Ingreso de información del usuario
 query = input('Ingresa tu query: ')
 min_year = input('Ingresa una fecha minima de búsqueda: ')# ver que pasa con la variable
-max_results = 100 #Este número se puede ajustar a voluntad, estoy buscando algún lado con un argumento logico
+context = input('Ingresa un parrafo que indique el objetivo de esta investigación: ')
+max_results = 5000 #Este número se puede ajustar a voluntad, estoy buscando algún lado con un argumento logico
 
 # Instrucciones para openAI y la actualización de la query para ieee xplore
-instructions= 'Te entregaré una query que es originalmente pensada para la herramienta de busqueda IEEE xplore. Necesito que crees 3 titulos alternos y las concatenes con el operador logico OR. Ejemplo de como espero que se vea la respuesta: mobile programming OR smartphone programming OR smartphone app developemet. A continuación te entrego la query que quiero que proceses'
-new_query = query_openai(instructions + "\n\n" + query)
+instructions= 'Te entregaré una query que es originalmente pensada para la herramienta de busqueda IEEE xplore. Necesito que crees 3 titulos alternos y las concatenes con el operador logico OR. Ejemplo de como espero que se vea la respuesta: mobile programming OR smartphone programming OR smartphone app developemet. Es importante que solo me respondas en el formato del ejemplo. A continuación te entrego la query que quiero que proceses:'
+new_query = smart_prompt_assistant(instructions + "\n\n" + query)
 #sin llamar por que no quiero gastar mis creditos
 # Piensa que la instrucción de openAI puede ser modificada para obtener mejor resultados, ahí hay un trabajo que hacer. Como saber que es una query optima de busqueda, como evaluamos la calidad de la query por ejemplo
-#print(new_query)
+print(new_query)
 
 
 # Realizar la búsqueda
-search_ieee_xplore(ieee_api_key, new_query, max_results, min_year)
-#search_ieee_xplore(ieee_api_key, query, max_results, min_year)
+df=search_ieee_xplore(ieee_api_key, new_query, max_results, min_year)
+
+#Procesamiento de texto
+df= quitar_duplicados(df)
+list_abs = palabras_columna(df, 1)
+bad_words_abs = Seleccionar_outliers_small(list_abs,query,context)
+filtro_aplicado= Filtrar_outliers(df,bad_words_abs,1)
+list_tit = palabras_columna(df, 0)
+bad_words_tit = Seleccionar_outliers_small(list_tit,query,context)
+filtro_aplicado= Filtrar_outliers(filtro_aplicado,bad_words_tit,0)
+print("RESULTADO")
+print(filtro_aplicado)
+#pandas_to_excel(df,'Prueba_filtro_abstracto')
