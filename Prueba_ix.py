@@ -15,17 +15,24 @@ current_year = datetime.now().year
 
 # Función para construir la URL de la API de IEEE Xplore
 def build_ieee_xplore_url(api_key, query, max_records, year):
+    '''
+    Esta función solo crea los parametros para realizar la consulta a ieeexplore
+    '''
     base_url = "https://ieeexploreapi.ieee.org/api/v1/search/articles"
     params = {
         'apikey': api_key,
         'querytext': query,
         'max_records': max_records,
-        'd-year' : year
+        'start_year' : year,
+        'end_year' : current_year
     }
     return base_url, params
 
 # Función para realizar la solicitud a la API de IEEE Xplore
 def search_ieee_xplore(api_key, query, max_records, min_year):
+    '''
+    Función que hace la consulta a ieee xplore. Genera un file .xlsx bajo el nombre de 'output' y aparte retorna un dataFrame.
+    '''
     base_url, params = build_ieee_xplore_url(api_key, query, max_records, min_year)
     
     # Realizar la solicitud GET a la API
@@ -61,7 +68,7 @@ def search_ieee_xplore(api_key, query, max_records, min_year):
         df = pd.DataFrame(datos)
         
         # Escribir el DataFrame en un archivo Excel
-        df.to_excel('output.xlsx', index=False)
+        #df.to_excel('output.xlsx', index=False)
 
         print("Datos guardados en 'output.xlsx'")
     else:
@@ -86,13 +93,6 @@ def smart_prompt_assistant(prompt, model="gpt-3.5-turbo", max_tokens=100):
     except Exception as e:
         return f"Error: {e}"
 
-def Buscando_fecha(api_key, query, max_records, year):
-    '''
-    Función que realiza el llamado por año desde el año entregado hasta el presente.
-    '''
-    
-    return 0
-
 
 
 
@@ -101,27 +101,40 @@ def Buscando_fecha(api_key, query, max_records, year):
 query = input('Ingresa tu query: ')
 min_year = input('Ingresa una fecha minima de búsqueda: ')# ver que pasa con la variable
 context = input('Ingresa un parrafo que indique el objetivo de esta investigación: ')
-max_results = 5000 #Este número se puede ajustar a voluntad, estoy buscando algún lado con un argumento logico
+max_results = 1500 #Este número se puede ajustar a voluntad, estoy buscando algún lado con un argumento logico
 
 # Instrucciones para openAI y la actualización de la query para ieee xplore
 instructions= 'Te entregaré una query que es originalmente pensada para la herramienta de busqueda IEEE xplore. Necesito que crees 3 titulos alternos y las concatenes con el operador logico OR. Ejemplo de como espero que se vea la respuesta: mobile programming OR smartphone programming OR smartphone app developemet. Es importante que solo me respondas en el formato del ejemplo. A continuación te entrego la query que quiero que proceses:'
 new_query = smart_prompt_assistant(instructions + "\n\n" + query)
 #sin llamar por que no quiero gastar mis creditos
 # Piensa que la instrucción de openAI puede ser modificada para obtener mejor resultados, ahí hay un trabajo que hacer. Como saber que es una query optima de busqueda, como evaluamos la calidad de la query por ejemplo
-print(new_query)
+
 
 
 # Realizar la búsqueda
 df=search_ieee_xplore(ieee_api_key, new_query, max_results, min_year)
 
+
 #Procesamiento de texto
 df= quitar_duplicados(df)
+
+#creando filtro y filtrando por abstracto
 list_abs = palabras_columna(df, 1)
 bad_words_abs = Seleccionar_outliers_small(list_abs,query,context)
 filtro_aplicado= Filtrar_outliers(df,bad_words_abs,1)
+
+#creando filtro y filtrando por titulo
 list_tit = palabras_columna(df, 0)
 bad_words_tit = Seleccionar_outliers_small(list_tit,query,context)
 filtro_aplicado= Filtrar_outliers(filtro_aplicado,bad_words_tit,0)
-print("RESULTADO")
-print(filtro_aplicado)
+
+#para evitar copias por procesamiento
+filtro_aplicado.drop_duplicates()
+
+# Escribir el DataFrame en un archivo Excel
+filtro_aplicado.to_excel('output_filtrado.xlsx', index=False)
+
+#Mostrar copias
+#print("RESULTADO")
+#print(filtro_aplicado)
 #pandas_to_excel(df,'Prueba_filtro_abstracto')
