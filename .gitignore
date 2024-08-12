@@ -1,5 +1,8 @@
 .env 
 Failed_attempts/
 acmdownload/
+venv/
+*.pyc
+__pycache__/
 How_to_ieee_api.md
 *.xlsx

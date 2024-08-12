@@ -66,11 +66,8 @@ def search_ieee_xplore(api_key, query, max_records, min_year):
         
         # Crear un DataFrame de pandas a partir del diccionario
         df = pd.DataFrame(datos)
-        
-        # Escribir el DataFrame en un archivo Excel
-        #df.to_excel('output.xlsx', index=False)
 
-        print("Datos guardados en 'output.xlsx'")
+
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
@@ -101,38 +98,49 @@ def smart_prompt_assistant(prompt, model="gpt-3.5-turbo", max_tokens=100):
 query = input('Ingresa tu query: ')
 min_year = input('Ingresa una fecha minima de búsqueda: ')# ver que pasa con la variable
 context = input('Ingresa un parrafo que indique el objetivo de esta investigación: ')
-max_results = 1500 #Este número se puede ajustar a voluntad, estoy buscando algún lado con un argumento logico
+avoided = input('Ingresa elementos del área que quieras evitar, en formato de palabras o terminos: ')
+max_results = 500 #Este número se puede ajustar a voluntad, estoy buscando algún lado con un argumento logico
+
+
+#new query genera un string más largo con titulos alternativos para ampliar el área de búsquda
+instructions_triggers= 'I will give you a list of words on topics and i need you to create a list with these words and add to the list their synonyms. Only give me the list, no extra text allowed.'
+list_of_triggers= smart_prompt_assistant(instructions_triggers + "\n\n" + avoided)
+list_of_triggers=list_of_triggers.strip('\n').split('\n-')
+
+#nuevo_contexto genera una lista en formato str donde se describen los tópicos definidos por el usuario, que serán utilizados como criterio de exclusión
+nuevo_contexto=Get_topic(context)
+print('\nNuevo contexto: '+nuevo_contexto.strip(' '))
 
 # Instrucciones para openAI y la actualización de la query para ieee xplore
 instructions= 'Te entregaré una query que es originalmente pensada para la herramienta de busqueda IEEE xplore. Necesito que crees 3 titulos alternos y las concatenes con el operador logico OR. Ejemplo de como espero que se vea la respuesta: mobile programming OR smartphone programming OR smartphone app developemet. Es importante que solo me respondas en el formato del ejemplo. A continuación te entrego la query que quiero que proceses:'
-new_query = smart_prompt_assistant(instructions + "\n\n" + query)
-#sin llamar por que no quiero gastar mis creditos
+new_query1 = smart_prompt_assistant(instructions + "\n\n" + query)
+instructions= 'Te entregaré una query que es originalmente pensada para la herramienta de busqueda IEEE xplore. Necesito que crees un prompt alternativo, que consista en un termino alternativo al query original y enlaces a través del operador logico NEAR un termino básado en el contexto que se te entregará después. Ejemplo de formato de resultado: smartphone NEAR/6 sustainability.Es importante que solo me respondas en el formato del ejemplo. Query original: '
+new_query2 = smart_prompt_assistant(instructions + query + "\n\n Contexto:"+ nuevo_contexto)
+instructions= 'Te entregaré una query que es originalmente pensada para la herramienta de busqueda IEEE xplore. Necesito que crees una query alternativa con synonimos y el mismo formato, para ello se te entregará la query origninal, un contexto y temas que no quiero en la búsqueda. Es importante que solo me respondas con la nueva query.'
+new_query3 = smart_prompt_assistant(instructions + "\n query original" + new_query1 +"\n\n"+"contexto:"+nuevo_contexto+ "\n temas a evitar:"+ '-'.join(list_of_triggers))
+
+print('Query 1:'+new_query1+'\n Query 2:'+new_query2+'\n Query 3: '+new_query3)
 # Piensa que la instrucción de openAI puede ser modificada para obtener mejor resultados, ahí hay un trabajo que hacer. Como saber que es una query optima de busqueda, como evaluamos la calidad de la query por ejemplo
 
 
 
 # Realizar la búsqueda
-df=search_ieee_xplore(ieee_api_key, new_query, max_results, min_year)
+df1=search_ieee_xplore(ieee_api_key, new_query1, max_results, min_year)
+df2=search_ieee_xplore(ieee_api_key, new_query2, max_results, min_year)
+df3=search_ieee_xplore(ieee_api_key, new_query3, max_results, min_year)
+new_df = pd.concat([df1, df2, df3], ignore_index=True)
+print(new_df.shape)
+print(df1.shape)
+print(df2.shape)
+print(df3.shape)
 
 
-#Procesamiento de texto
-df= quitar_duplicados(df)
+filtro_aplicado=procesar_texto(new_df,new_query1,nuevo_contexto,list_of_triggers)[0]
+filtro_doi_aplicado=drop_rows_without_doi(filtro_aplicado)
 
-#creando filtro y filtrando por abstracto
-list_abs = palabras_columna(df, 1)
-bad_words_abs = Seleccionar_outliers_small(list_abs,query,context)
-filtro_aplicado= Filtrar_outliers(df,bad_words_abs,1)
-
-#creando filtro y filtrando por titulo
-list_tit = palabras_columna(df, 0)
-bad_words_tit = Seleccionar_outliers_small(list_tit,query,context)
-filtro_aplicado= Filtrar_outliers(filtro_aplicado,bad_words_tit,0)
-
-#para evitar copias por procesamiento
-filtro_aplicado.drop_duplicates()
 
 # Escribir el DataFrame en un archivo Excel
-filtro_aplicado.to_excel('output_filtrado.xlsx', index=False)
+filtro_doi_aplicado.to_excel('output_filtrado.xlsx', index=False)
 
 #Mostrar copias
 #print("RESULTADO")
