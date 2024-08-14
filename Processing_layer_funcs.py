@@ -1,4 +1,5 @@
 import pandas as pd
+import requests
 import numpy as np
 from collections import Counter
 import openai
@@ -79,15 +80,15 @@ def Seleccionar_outliers(lista_completa, original_prompt, contexto, tokens=100, 
     '''
     client = OpenAI()
     who= 'You are a helptful assistant for data analysis.'#lo hago así para leerlo bien en caso de editarlo en el futuro
-    I1='I want you to create a list of words that have NOTHING to do with a particular topic or theme.\n' 
-    I2='\n Here is the original topic :\n' 
-    I3='\n And this is the list of which you will select the unrelated words: \n'
+    #I1='I want you to create a list of words that have NOTHING to do with a particular topic or theme.\n' 
+    #I2='\n Here is the original topic :\n' 
+    #I3='\n And this is the list of which you will select the unrelated words: \n'
     #I4='\n Now, this is a bit of context to help you find these words that have nothing to do with the topic or the context: '
-    I4='\n Now, this is a bit of context. The following is a small list of themes that give context to the original topic: '
-    I5='Finally, is an example of the format i want for the answer (use this format and nothing else)(i want the words divided by a coma): Cities, Iot, Cloud, Hardware\n\n'
+    #I4='\n Now, this is a bit of context. The following is a small list of themes that give context to the original topic: '
+    #I5='Finally, is an example of the format i want for the answer (use this format and nothing else)(i want the words divided by a coma): Cities, Iot, Cloud, Hardware\n\n'
 
     #prompt=I1 + I2 + original_prompt+ I3+ ','.join(lista_completa)+ I4 + contexto + I5
-    prompt= 'I give you a list of words present in a bunch of titles:'+ ','.join(lista_completa)+'\n\n I want you to give me back a list of the words in that list, that might indicate the presence of a totally unrelated topic to the context given(ignore dates and numbers)(remember words that talk about other topics not contained in the context given). The context in question:\n' + contexto +'\n Important: write the list and nothing else.'
+    prompt= 'I give you a list of words present in a bunch of titles:'+ ','.join(lista_completa)+'\n\n I want you to give me back another list, of the words in that list that might indicate the presence of a totally unrelated topic to the context given(ignore dates and numbers)(remember words that talk about other topics not contained in the context given). The context in question:\n' + contexto +'\n Important: write the list and nothing else. Format of the output list: word1, word2, word3.'
     
     try:
         response = client.chat.completions.create(
@@ -119,6 +120,11 @@ def Filtrar_outliers(documento, lista_outliers, abstracto_o_titulo):
 
     # Convert the column to a string type to ensure .str accessor works
     documento.loc[:, columna] = documento[columna].astype(str)
+
+    if '' in lista_outliers:
+        lista_outliers.remove('')
+    if ' ' in lista_outliers:
+        lista_outliers.remove(' ')
     
     print(f"Filtering column: {columna}")
     print(f"Outliers list: {lista_outliers}")
