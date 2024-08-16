@@ -9,6 +9,7 @@ import pandas as pd
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
+from typing import Optional 
 
 app = FastAPI()
 
@@ -79,7 +80,7 @@ class RequestModel(BaseModel):
     query: str
     min_year: str
     context: str
-    avoided: str
+    avoided: Optional[str] = None  
 
 @app.post("/process")
 def process_request(request: RequestModel):
@@ -88,11 +89,15 @@ def process_request(request: RequestModel):
     context = request.context
     avoided = request.avoided
     max_results = 500
-    
-    # Proceso de generación de nuevas queries
-    instructions_triggers = 'I will give you a list of concepts on topics and i need you to expand said list and add synonyms of these concepts, no explanation just the term . Only give me the list, no extra text allowed. Format of the list should be a string in the format: concept1, concept2, concept3'
-    list_of_triggers = smart_prompt_assistant(instructions_triggers + "\n\n" + avoided)
-    list_of_triggers = list_of_triggers.strip('\n').split(',')
+
+     # Si 'avoided' no fue proporcionado, se maneja como una lista vacía
+    if avoided:
+        instructions_triggers = 'I will give you a list of concepts on topics and i need you to expand said list and add synonyms of these concepts, no explanation just the term . Only give me the list, no extra text allowed. Format of the list should be a string in the format: concept1, concept2, concept3'
+        list_of_triggers = smart_prompt_assistant(instructions_triggers + "\n\n" + avoided)
+        list_of_triggers = list_of_triggers.strip('\n').split(',')
+    else:
+        list_of_triggers = []
+
 
     nuevo_contexto = Get_topic(context)
 

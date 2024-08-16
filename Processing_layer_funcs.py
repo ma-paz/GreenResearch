@@ -88,7 +88,7 @@ def Seleccionar_outliers(lista_completa, original_prompt, contexto, tokens=100, 
     #I5='Finally, is an example of the format i want for the answer (use this format and nothing else)(i want the words divided by a coma): Cities, Iot, Cloud, Hardware\n\n'
 
     #prompt=I1 + I2 + original_prompt+ I3+ ','.join(lista_completa)+ I4 + contexto + I5
-    prompt= 'I give you a list of words present in a bunch of titles:'+ ','.join(lista_completa)+'\n\n I want you to give me back another list, of the words in that list that might indicate the presence of a totally unrelated topic to the context given(ignore dates and numbers)(remember words that talk about other topics not contained in the context given). The context in question:\n' + contexto +'\n Important: write the list and nothing else. Format of the output list: word1, word2, word3.'
+    prompt= 'I give you a list of words present in a bunch of titles:'+ ','.join(lista_completa)+'\n\n I want you to give me back another list, of the words in that list that might indicate the presence of a totally unrelated topic to the context given(ignore dates and numbers)(ignore single letter words)(remember words that talk about other topics not contained in the context given). The context in question:\n' + contexto +'\n Important: write the list and nothing else. Format of the output list: word1, word2, word3.'
     
     try:
         response = client.chat.completions.create(
@@ -156,13 +156,15 @@ def procesar_texto(df, query, nuevo_contexto, list_of_triggers):
     list_abs = palabras_columna(df, 1)
     bad_words_abs = Seleccionar_outliers(list_abs, query, nuevo_contexto)
     filtro_aplicado = Filtrar_outliers(df, bad_words_abs, 1)
-    filtro_aplicado = Filtrar_outliers(filtro_aplicado, list_of_triggers, 1)
+    if list_of_triggers != []:
+        filtro_aplicado = Filtrar_outliers(filtro_aplicado, list_of_triggers, 1)
 
     # Creando filtro y filtrando por título
     list_tit = palabras_columna(filtro_aplicado, 0)
     bad_words_tit = Seleccionar_outliers(list_tit, query, nuevo_contexto)
     forma_final = Filtrar_outliers(filtro_aplicado, bad_words_tit, 0)
-    forma_final = Filtrar_outliers(forma_final, list_of_triggers, 0)
+    if list_of_triggers != []:
+        forma_final = Filtrar_outliers(forma_final, list_of_triggers, 0)
 
     # Evitar copias por procesamiento
     forma_final = forma_final.drop_duplicates()
