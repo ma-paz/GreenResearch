@@ -1,6 +1,7 @@
 import requests
 import os
 import openai
+import logging
 from dotenv import load_dotenv
 from openai import OpenAI
 from pydantic import BaseModel 
@@ -11,7 +12,18 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from typing import Optional 
 
+# Configuración básica del logger
+logging.basicConfig(
+    filename="api_logs.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
 app = FastAPI()
+
+# Crear un logger
+logger = logging.getLogger(__name__)
+
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
@@ -82,6 +94,23 @@ class RequestModel(BaseModel):
     context: str
     avoided: Optional[str] = None  
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    # Logear la solicitud entrante
+    logger.info(f"Recibida solicitud: {request.method} {request.url}")
+
+    # Leer el cuerpo de la solicitud
+    body = await request.body()
+    logger.info(f"Body: {body.decode('utf-8')}")
+
+    # Procesar la solicitud
+    response = await call_next(request)
+
+    # Logear la respuesta
+    logger.info(f"Enviando respuesta con código de estado: {response.status_code}")
+
+    return response
+
 @app.post("/process")
 def process_request(request: RequestModel):
     query = request.query
@@ -89,6 +118,10 @@ def process_request(request: RequestModel):
     context = request.context
     avoided = request.avoided
     max_results = 500
+
+     # Logear la consulta del usuario
+    logger.info(f"Consulta recibida: query={query}, min_year={min_year}, context={context}, avoided={avoided}")
+
 
      # Si 'avoided' no fue proporcionado, se maneja como una lista vacía
     if avoided:
